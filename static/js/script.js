@@ -1,7 +1,6 @@
 // Load semua data saat halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
     loadWeather();
-    loadQuote();
     loadCurrency();
     loadNews();
 });
@@ -49,7 +48,6 @@ async function loadWeather() {
         weatherContent.innerHTML = `<div class="error">Gagal memuat data cuaca: ${error.message}</div>`;
     }
 }
-
 
 // Fungsi untuk load nilai tukar mata uang
 async function loadCurrency() {

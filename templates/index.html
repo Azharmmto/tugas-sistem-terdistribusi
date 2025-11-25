@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Systems Dashboard - Sistem Terdistribusi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Distributed Systems Dashboard</h1>
+            <p class="subtitle">Aplikasi Web Untuk Melihat Informasi Cuaca, Nilai Tukar Mata Uang dan Berita Teknologi</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Weather Card -->
+            <div class="card" id="weather-card">
+                <div class="card-header">
+                    <h2>🌤️ Cuaca Real-time</h2>
+                    <button onclick="loadWeather()" class="refresh-btn">Refresh</button>
+                </div>
+                <div class="card-body" id="weather-content">
+                    <div class="loading">Memuat data...</div>
+                </div>
+            </div>
+
+            <!-- Currency Card -->
+            <div class="card" id="currency-card">
+                <div class="card-header">
+                    <h2>💱 Nilai Tukar Mata Uang</h2>
+                    <button onclick="loadCurrency()" class="refresh-btn">Refresh</button>
+                </div>
+                <div class="card-body" id="currency-content">
+                    <div class="loading">Memuat data...</div>
+                </div>
+            </div>
+
+            <!-- News Card -->
+            <div class="card" id="news-card">
+                <div class="card-header">
+                    <h2>📰 Berita Teknologi</h2>
+                    <button onclick="loadNews()" class="refresh-btn">Refresh</button>
+                </div>
+                <div class="card-body" id="news-content">
+                    <div class="loading">Memuat data...</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p><strong>API yang digunakan:</strong></p>
+                <ul>
+                    <li>Open-Meteo API (Weather Data)</li>
+                    <li>Exchange Rate API (Currency Exchange)</li>
+                    <li>News API (Technology News)</li>
+                </ul>
+                <p class="credit">Tugas Mata Kuliah Sistem Terdistribusi &copy; 2025</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

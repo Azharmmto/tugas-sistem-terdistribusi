@@ -5,6 +5,28 @@ document.addEventListener('DOMContentLoaded', function() {
     loadNews();
 });
 
+// Fungsi untuk mendapatkan emoji cuaca berdasarkan kondisi
+function getWeatherEmoji(condition) {
+    const weather = condition.toLowerCase();
+    if (weather.includes('cerah') && !weather.includes('berawan')) {
+        return '☀️'; // Cerah
+    } else if (weather.includes('cerah berawan') || weather.includes('cerah-berawan')) {
+        return '⛅'; // Cerah Berawan
+    } else if (weather.includes('berawan')) {
+        return '☁️'; // Berawan
+    } else if (weather.includes('hujan lebat') || weather.includes('hujan petir')) {
+        return '⛈️'; // Hujan Petir
+    } else if (weather.includes('hujan')) {
+        return '🌧️'; // Hujan
+    } else if (weather.includes('petir') || weather.includes('badai')) {
+        return '⚡'; // Petir/Badai
+    } else if (weather.includes('kabut')) {
+        return '🌫️'; // Kabut
+    } else {
+        return '🌤️'; // Default
+    }
+}
+
 // Fungsi untuk load data cuaca
 async function loadWeather() {
     const weatherContent = document.getElementById('weather-content');
@@ -18,41 +40,39 @@ async function loadWeather() {
         if (result.status === 'success' && result.data.current_weather) {
             const weather = result.data.current_weather;
             const lokasi = result.data.lokasi;
+            const weatherEmoji = getWeatherEmoji(weather.weather_desc);
             
             weatherContent.innerHTML = `
                 <div class="weather-info">
-                    <div class="weather-temp">${weather.t}°C</div>
+                    <div class="weather-icon-temp">
+                        <div class="weather-icon-large">${weatherEmoji}</div>
+                        <div class="weather-temp">${weather.t}°C</div>
+                    </div>
+                    <div class="weather-condition">${weather.weather_desc}</div>
                     <div class="weather-details">
                         <div class="weather-item">
-                            <strong>Kondisi</strong>
-                            ${weather.weather_desc}
-                        </div>
-                        <div class="weather-item">
-                            <strong>Kecepatan Angin</strong>
+                            <strong>💨 Kecepatan Angin</strong>
                             ${weather.ws} km/h
                         </div>
                         <div class="weather-item">
-                            <strong>Arah Angin</strong>
+                            <strong>🧭 Arah Angin</strong>
                             ${weather.wd} (${weather.wd_deg}°)
                         </div>
                         <div class="weather-item">
-                            <strong>Kelembaban</strong>
+                            <strong>💧 Kelembaban</strong>
                             ${weather.hu}%
                         </div>
                         <div class="weather-item">
-                            <strong>Jarak Pandang</strong>
+                            <strong>👁️ Jarak Pandang</strong>
                             ${weather.vs_text}
                         </div>
                         <div class="weather-item">
-                            <strong>Waktu</strong>
+                            <strong>🕐 Waktu Update</strong>
                             ${new Date(weather.local_datetime).toLocaleString('id-ID')}
                         </div>
                     </div>
                     <p style="margin-top: 15px; color: #999; font-size: 0.9rem;">
-                        Lokasi: ${lokasi.kecamatan}, ${lokasi.kotkab}, ${lokasi.provinsi}
-                    </p>
-                    <p style="margin-top: 5px; color: #999; font-size: 0.9rem;">
-                        Sumber Data <a href="https://data.bmkg.go.id/prakiraan-cuaca/" target="_blank" style="color: #999; text-decoration: underline;">BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)</a>
+                        📍 ${lokasi.desa}, ${lokasi.kecamatan}, ${lokasi.kotkab}, ${lokasi.provinsi}
                     </p>
                 </div>
             `;
@@ -99,7 +119,7 @@ async function loadCurrency() {
     }
 }
 
-// Fungsi untuk load berita
+// Fungsi untuk load berita (3 berita random)
 async function loadNews() {
     const newsContent = document.getElementById('news-content');
     newsContent.innerHTML = '<div class="loading">Memuat berita...</div>';
@@ -118,13 +138,15 @@ async function loadNews() {
             
             let html = '<ul class="news-list">';
             
-            articles.forEach(article => {
+            articles.forEach((article, index) => {
                 if (article.title && article.title !== '[Removed]') {
                     html += `
                         <li class="news-item">
-                            <span class="news-title">${article.title}</span>
-                            <p class="news-description">${article.description || 'Tidak ada deskripsi'}</p>
-                            <a href="${article.url}" target="_blank" class="news-link">Baca selengkapnya →</a>
+                            <div class="news-content">
+                                <span class="news-title">${article.title}</span>
+                                <p class="news-description">${article.description || 'Tidak ada deskripsi'}</p>
+                                <a href="${article.url}" target="_blank" class="news-link">Baca selengkapnya →</a>
+                            </div>
                         </li>
                     `;
                 }
@@ -138,4 +160,49 @@ async function loadNews() {
     } catch (error) {
         newsContent.innerHTML = `<div class="error">Gagal memuat berita: ${error.message}</div>`;
     }
+}
+
+// Fungsi untuk mengirim daily briefing via Telegram
+async function sendBriefing(event) {
+    event.preventDefault();
+    
+    const telegramInput = document.getElementById('telegram-input');
+    const telegramId = telegramInput.value.trim();
+    const statusDiv = document.getElementById('briefing-status');
+    
+    // Validasi Telegram ID
+    if (!/^\d+$/.test(telegramId)) {
+        statusDiv.innerHTML = '<div class="error">✗ Telegram ID harus berupa angka</div>';
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+        return;
+    }
+    
+    // Show loading
+    statusDiv.innerHTML = '<div class="loading">Mengirim daily briefing ke Telegram...</div>';
+    
+    try {
+        const response = await fetch('/api/send-briefing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ telegram_id: telegramId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            statusDiv.innerHTML = `<div class="success">✓ ${result.message}</div>`;
+            telegramInput.value = '';
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `<div class="error">✗ Gagal mengirim: ${error.message}</div>`;
+    }
+    
+    // Clear status after 5 seconds
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 5000);
 }

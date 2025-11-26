@@ -2,6 +2,13 @@ from flask import Flask, render_template, request, jsonify
 import requests
 from datetime import datetime
 import json
+import random
+import os
+from dotenv import load_dotenv
+import asyncio
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -101,6 +108,7 @@ def get_news():
     """
     Endpoint berita teknologi Indonesia menggunakan CNN Indonesia API.
     Format data: JSON (Berita Bahasa Indonesia)
+    Menampilkan 3 berita random dari total berita
     """
     try:
         # 1. Request ke URL API berita teknologi Indonesia
@@ -110,12 +118,18 @@ def get_news():
         # 2. Parse sebagai JSON
         data = response.json()
         
-        # 3. Ambil list artikel (default kosong jika tidak ada)
-        raw_articles = data.get('data', [])[:5]
+        # 3. Ambil semua artikel
+        all_articles = data.get('data', [])
+        
+        # 4. Pilih 3 berita secara random
+        if len(all_articles) >= 3:
+            raw_articles = random.sample(all_articles, 3)
+        else:
+            raw_articles = all_articles
         
         formatted_articles = []
         
-        # 4. Loop dan format data agar sesuai dengan Frontend JS
+        # 5. Loop dan format data agar sesuai dengan Frontend JS
         for item in raw_articles:
             formatted_articles.append({
                 'title': item.get('title'),
@@ -147,9 +161,231 @@ def health_check():
     """Endpoint untuk health check sistem"""
     return jsonify({
         'status': 'healthy',
-        'service': 'Distributed Systems Dashboard',
+        'service': 'InfoHub Dashboard',
         'timestamp': datetime.now().isoformat()
     })
+
+@app.route('/api/send-briefing', methods=['POST'])
+def send_briefing():
+    """
+    Endpoint untuk mengirim Daily Briefing via Telegram
+    Berisi: Cuaca hari ini, Kurs IDR/USD, dan 3 berita teratas
+    """
+    try:
+        data = request.get_json()
+        telegram_id = data.get('telegram_id')
+        
+        if not telegram_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Telegram ID diperlukan'
+            }), 400
+        
+        # Validasi telegram_id adalah angka
+        try:
+            telegram_id = str(telegram_id).strip()
+            int(telegram_id)  # Test if it's a valid number
+        except ValueError:
+            return jsonify({
+                'status': 'error',
+                'message': 'Telegram ID harus berupa angka'
+            }), 400
+        
+        # 1. Ambil data cuaca
+        weather_data = get_weather_data()
+        
+        # 2. Ambil data currency
+        currency_data = get_currency_data()
+        
+        # 3. Ambil 3 berita teratas
+        news_data = get_news_data(3)
+        
+        # 4. Buat pesan Telegram
+        message = create_telegram_message(weather_data, currency_data, news_data)
+        
+        # 5. Kirim via Telegram
+        result = send_telegram_message(telegram_id, message)
+        
+        if result:
+            return jsonify({
+                'status': 'success',
+                'message': f'Daily briefing berhasil dikirim ke Telegram ID: {telegram_id}'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Gagal mengirim pesan Telegram. Pastikan Bot Token sudah dikonfigurasi dan Telegram ID benar.'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+def get_weather_data():
+    """Helper function untuk mengambil data cuaca"""
+    try:
+        url = WEATHER_API_URL
+        params = {'adm4': '73.71.09.1009'}
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        current_weather = None
+        if data.get('data') and len(data['data']) > 0:
+            cuaca_data = data['data'][0].get('cuaca', [])
+            if cuaca_data and len(cuaca_data) > 0 and len(cuaca_data[0]) > 0:
+                current_weather = cuaca_data[0][0]
+        
+        return {
+            'lokasi': data.get('lokasi', {}),
+            'current_weather': current_weather
+        }
+    except:
+        return None
+
+def get_currency_data():
+    """Helper function untuk mengambil data currency"""
+    try:
+        response = requests.get(CURRENCY_API_URL, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        rates = data.get('rates', {})
+        return {
+            'base': data.get('base'),
+            'idr': rates.get('IDR', 0)
+        }
+    except:
+        return None
+
+def get_news_data(limit=3):
+    """Helper function untuk mengambil berita"""
+    try:
+        response = requests.get(NEWS_API_URL, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        all_articles = data.get('data', [])
+        
+        if len(all_articles) >= limit:
+            articles = random.sample(all_articles, limit)
+        else:
+            articles = all_articles[:limit]
+        
+        return articles
+    except:
+        return []
+
+def create_telegram_message(weather_data, currency_data, news_data):
+    """Membuat pesan Telegram untuk daily briefing"""
+    message = "📊 *Laporan Harian \\(Daily Briefing\\)*\n"
+    message += f"📅 Tanggal: {datetime.now().strftime('%d %B %Y')}\n"
+    message += "━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    
+    # Cuaca
+    if weather_data and weather_data.get('current_weather'):
+        weather = weather_data['current_weather']
+        lokasi = weather_data.get('lokasi', {})
+        
+        # Get weather emoji
+        weather_emoji = get_weather_emoji_simple(weather.get('weather_desc', ''))
+        
+        message += f"🌤️ *Cuaca Hari Ini* {weather_emoji}\n"
+        message += f"├ Kondisi: *{weather.get('weather_desc', 'N/A')}*\n"
+        message += f"├ Suhu: *{weather.get('t', 'N/A')}°C*\n"
+        message += f"├ Lokasi: {lokasi.get('kotkab', 'N/A')}, {lokasi.get('provinsi', 'N/A')}\n"
+        message += f"├ Angin: {weather.get('ws', 'N/A')} km/h \\({weather.get('wd', 'N/A')}\\)\n"
+        message += f"└ Kelembaban: {weather.get('hu', 'N/A')}%\n\n"
+    
+    # Currency
+    if currency_data:
+        message += "💱 *Kurs Rupiah Hari Ini*\n"
+        message += f"└ 1 USD = Rp {currency_data.get('idr', 0):,.2f}\n\n"
+    
+    # News
+    if news_data:
+        message += "📰 *Berita Teknologi Teratas*\n\n"
+        for i, article in enumerate(news_data[:3], 1):
+            title = article.get('title', 'N/A')
+            # Escape markdown special characters
+            title = title.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace(']', '\\]').replace('(', '\\(').replace(')', '\\)').replace('~', '\\~').replace('`', '\\`').replace('>', '\\>').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('=', '\\=').replace('|', '\\|').replace('{', '\\{').replace('}', '\\}').replace('.', '\\.').replace('!', '\\!')
+            message += f"{i}\\. {title}\n"
+            link = article.get('link', '#')
+            message += f"   [Baca selengkapnya]({link})\n\n"
+    
+    message += "━━━━━━━━━━━━━━━━━━━━━━━\n"
+    message += "_InfoHub Dashboard_\n"
+    message += "_Sistem Informasi Terintegrasi_"
+    
+    return message
+
+def get_weather_emoji_simple(condition):
+    """Helper untuk mendapatkan emoji cuaca sederhana"""
+    weather = condition.lower()
+    if 'cerah' in weather and 'berawan' not in weather:
+        return '☀️'
+    elif 'cerah berawan' in weather or 'cerah-berawan' in weather:
+        return '⛅'
+    elif 'berawan' in weather:
+        return '☁️'
+    elif 'hujan petir' in weather or 'hujan lebat' in weather:
+        return '⛈️'
+    elif 'hujan' in weather:
+        return '🌧️'
+    elif 'petir' in weather or 'badai' in weather:
+        return '⚡'
+    elif 'kabut' in weather:
+        return '🌫️'
+    else:
+        return '🌤️'
+
+def send_telegram_message(chat_id, message):
+    """
+    Mengirim pesan ke Telegram menggunakan Bot API
+    """
+    try:
+        # Ambil bot token dari environment variables
+        bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+        
+        if not bot_token:
+            print("ERROR: Telegram Bot Token not configured!")
+            print("Please set TELEGRAM_BOT_TOKEN in .env file")
+            return False
+        
+        # Telegram API URL
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        
+        # Payload
+        payload = {
+            'chat_id': chat_id,
+            'text': message,
+            'parse_mode': 'MarkdownV2',
+            'disable_web_page_preview': True
+        }
+        
+        print(f"Mengirim pesan Telegram ke chat_id: {chat_id}...")
+        
+        # Send request
+        response = requests.post(url, json=payload, timeout=10)
+        response.raise_for_status()
+        result = response.json()
+        
+        if result.get('ok'):
+            print(f"✓ Pesan berhasil dikirim ke Telegram chat_id: {chat_id}")
+            return True
+        else:
+            print(f"ERROR: Telegram API error: {result.get('description', 'Unknown error')}")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Gagal mengirim pesan Telegram: {e}")
+        return False
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return False
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

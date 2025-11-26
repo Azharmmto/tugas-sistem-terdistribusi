@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distributed Systems Dashboard - Sistem Terdistribusi</title>
+    <title>InfoHub - Sistem Informasi Terintegrasi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Distributed Systems Dashboard</h1>
-            <p class="subtitle">Aplikasi Web Untuk Melihat Informasi Cuaca, Nilai Tukar Mata Uang dan Berita Teknologi</p>
+            <h1>📊 InfoHub Dashboard</h1>
+            <p class="subtitle">Sistem Informasi Terintegrasi: Cuaca, Kurs Mata Uang, dan Berita Teknologi</p>
         </header>
 
         <div class="dashboard-grid">
@@ -48,6 +48,27 @@
             </div>
         </div>
 
+        <!-- Daily Briefing Section -->
+        <div class="briefing-card">
+            <div class="card-header">
+                <h2>📧 Laporan Harian (Daily Briefing)</h2>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 15px; color: #666;">Dapatkan ringkasan cuaca, kurs rupiah, dan berita teknologi langsung ke Telegram Anda!</p>
+                <form id="briefing-form" onsubmit="sendBriefing(event)">
+                    <div class="email-input-group">
+                        <input type="text" id="telegram-input" placeholder="Masukkan Telegram ID Anda" required pattern="[0-9]+" title="Telegram ID harus berupa angka">
+                        <button type="submit" class="send-btn">Kirim</button>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 12px; color: #999;">
+                        💡 Cara mendapatkan Telegram ID: 
+                        <a href="https://t.me/userinfobot" target="_blank" style="color: #3498db;">Chat @userinfobot</a>
+                    </p>
+                </form>
+                <div id="briefing-status"></div>
+            </div>
+        </div>
+
         <footer>
             <div class="footer-content">
                 <p><strong>API yang digunakan:</strong></p>
@@ -56,7 +77,7 @@
                     <li>Exchange Rate API (Currency Exchange)</li>
                     <li>CNN Indonesia API (Berita Teknologi Indonesia)</li>
                 </ul>
-                <p class="credit">Tugas Mata Kuliah Sistem Terdistribusi &copy; 2025</p>
+                <p class="credit">InfoHub Dashboard - Tugas Mata Kuliah Sistem Terdistribusi &copy; 2025</p>
             </div>
         </footer>
     </div>

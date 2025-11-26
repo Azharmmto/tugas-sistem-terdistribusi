@@ -11,38 +11,53 @@ async function loadWeather() {
     weatherContent.innerHTML = '<div class="loading">Memuat data cuaca...</div>';
     
     try {
-        // Default koordinat Jakarta
-        const response = await fetch('/api/weather?lat=-5.1477&lon=119.4327');;
+        // Default kode wilayah Makassar (Karuwisi Utara)
+        const response = await fetch('/api/weather?adm4=73.71.09.1009');
         const result = await response.json();
         
-        if (result.status === 'success') {
+        if (result.status === 'success' && result.data.current_weather) {
             const weather = result.data.current_weather;
+            const lokasi = result.data.lokasi;
+            
             weatherContent.innerHTML = `
                 <div class="weather-info">
-                    <div class="weather-temp">${weather.temperature}°C</div>
+                    <div class="weather-temp">${weather.t}°C</div>
                     <div class="weather-details">
                         <div class="weather-item">
+                            <strong>Kondisi</strong>
+                            ${weather.weather_desc}
+                        </div>
+                        <div class="weather-item">
                             <strong>Kecepatan Angin</strong>
-                            ${weather.windspeed} km/h
+                            ${weather.ws} km/h
                         </div>
                         <div class="weather-item">
                             <strong>Arah Angin</strong>
-                            ${weather.winddirection}°
+                            ${weather.wd} (${weather.wd_deg}°)
+                        </div>
+                        <div class="weather-item">
+                            <strong>Kelembaban</strong>
+                            ${weather.hu}%
+                        </div>
+                        <div class="weather-item">
+                            <strong>Jarak Pandang</strong>
+                            ${weather.vs_text}
                         </div>
                         <div class="weather-item">
                             <strong>Waktu</strong>
-                            ${new Date(weather.time).toLocaleString('id-ID')}
-                        </div>
-                        <div class="weather-item">
-                            <strong>Kondisi</strong>
-                            Cuaca Code: ${weather.weathercode}
+                            ${new Date(weather.local_datetime).toLocaleString('id-ID')}
                         </div>
                     </div>
-                    <p style="margin-top: 15px; color: #999; font-size: 0.9rem;">Lokasi: Makassar, Indonesia</p>
+                    <p style="margin-top: 15px; color: #999; font-size: 0.9rem;">
+                        Lokasi: ${lokasi.kecamatan}, ${lokasi.kotkab}, ${lokasi.provinsi}
+                    </p>
+                    <p style="margin-top: 5px; color: #999; font-size: 0.9rem;">
+                        Sumber Data <a href="https://data.bmkg.go.id/prakiraan-cuaca/" target="_blank" style="color: #999; text-decoration: underline;">BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)</a>
+                    </p>
                 </div>
             `;
         } else {
-            throw new Error(result.message);
+            throw new Error(result.message || 'Data cuaca tidak tersedia');
         }
     } catch (error) {
         weatherContent.innerHTML = `<div class="error">Gagal memuat data cuaca: ${error.message}</div>`;

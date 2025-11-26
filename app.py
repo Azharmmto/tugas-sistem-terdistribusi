@@ -6,10 +6,10 @@ import json
 app = Flask(__name__)
 
 # API Endpoints (menggunakan API publik gratis)
-WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
+WEATHER_API_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
 QUOTE_API_URL = "https://api.quotable.io/random"
 CURRENCY_API_URL = "https://api.exchangerate-api.com/v4/latest/USD"
-NEWS_API_URL = "https://saurav.tech/NewsAPI/top-headlines/category/technology/us.json"
+NEWS_API_URL = "https://berita-indo-api-next.vercel.app/api/cnn-news/teknologi"
 
 @app.route('/')
 def index():
@@ -20,30 +20,38 @@ def index():
 def get_weather():
     """
     Endpoint untuk mendapatkan data cuaca
-    Integrasi dengan Open-Meteo API (gratis, tanpa key)
+    Integrasi dengan BMKG API (Badan Meteorologi, Klimatologi, dan Geofisika)
     """
     try:
-        # --- BAGIAN YANG DIUBAH ---
-        # Default diganti ke koordinat Makassar
-        latitude = request.args.get('lat', '-5.1477')  
-        longitude = request.args.get('lon', '119.4327')
-        # --------------------------
+        # Kode wilayah BMKG untuk Karuwisi Utara, Makassar
+        adm4_code = request.args.get('adm4', '73.71.09.1009')
         
         params = {
-            'latitude': latitude,
-            'longitude': longitude,
-            'current_weather': 'true',
-            # Timezone sudah benar 'Asia/Makassar' (WITA)
-            'timezone': 'Asia/Makassar' 
+            'adm4': adm4_code
         }
         
-        response = requests.get(WEATHER_API_URL, params=params, timeout=10)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(WEATHER_API_URL, params=params, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
+        # Ekstrak data cuaca terkini (data pertama dari array)
+        current_weather = None
+        if data.get('data') and len(data['data']) > 0:
+            cuaca_data = data['data'][0].get('cuaca', [])
+            if cuaca_data and len(cuaca_data) > 0 and len(cuaca_data[0]) > 0:
+                current_weather = cuaca_data[0][0]
+        
         return jsonify({
             'status': 'success',
-            'data': data,
+            'data': {
+                'lokasi': data.get('lokasi', {}),
+                'current_weather': current_weather,
+                'raw_data': data
+            },
             'timestamp': datetime.now().isoformat()
         })
     except requests.exceptions.RequestException as e:
@@ -91,35 +99,30 @@ def get_currency():
 @app.route('/api/news', methods=['GET'])
 def get_news():
     """
-    Endpoint berita teknologi menggunakan Saurav.tech NewsAPI Mirror.
-    Format data: JSON (Berita Bahasa Inggris - US)
+    Endpoint berita teknologi Indonesia menggunakan CNN Indonesia API.
+    Format data: JSON (Berita Bahasa Indonesia)
     """
     try:
-        # 1. Request ke URL API
+        # 1. Request ke URL API berita teknologi Indonesia
         response = requests.get(NEWS_API_URL, timeout=10)
         response.raise_for_status()
         
-        # 2. Parse sebagai JSON (Bukan XML)
+        # 2. Parse sebagai JSON
         data = response.json()
         
         # 3. Ambil list artikel (default kosong jika tidak ada)
-        raw_articles = data.get('articles', [])[:5]
+        raw_articles = data.get('data', [])[:5]
         
         formatted_articles = []
         
         # 4. Loop dan format data agar sesuai dengan Frontend JS
         for item in raw_articles:
-            # Filter: Kadang ada berita yang dihapus/error dengan judul "[Removed]"
-            if item.get('title') == '[Removed]':
-                continue
-                
             formatted_articles.append({
                 'title': item.get('title'),
-                'description': item.get('description'),
-                'url': item.get('url'),
-                'publishedAt': item.get('publishedAt'),
-                # API ini menggunakan key 'urlToImage', kita ubah jadi 'image' agar JS paham
-                'image': item.get('urlToImage') 
+                'description': item.get('contentSnippet'),
+                'url': item.get('link'),
+                'publishedAt': item.get('isoDate'),
+                'image': item.get('image', {}).get('small') if item.get('image') else None
             })
             
         return jsonify({

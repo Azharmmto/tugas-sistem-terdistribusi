@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify
 import requests
 from datetime import datetime
 import json
-import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
@@ -10,8 +9,7 @@ app = Flask(__name__)
 WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
 QUOTE_API_URL = "https://api.quotable.io/random"
 CURRENCY_API_URL = "https://api.exchangerate-api.com/v4/latest/USD"
-# NEWS_API_URL = "https://saurav.tech/NewsAPI/top-headlines/category/technology/us.json"
-# NEWS_API_URL = "https://api-berita-indonesia.vercel.app/cnn/teknologi/"
+NEWS_API_URL = "https://saurav.tech/NewsAPI/top-headlines/category/technology/us.json"
 
 @app.route('/')
 def index():
@@ -93,38 +91,35 @@ def get_currency():
 @app.route('/api/news', methods=['GET'])
 def get_news():
     """
-    Endpoint berita teknologi menggunakan RSS Feed Resmi CNN Indonesia
-    Stabil, Resmi, dan Anti-Limit.
+    Endpoint berita teknologi menggunakan Saurav.tech NewsAPI Mirror.
+    Format data: JSON (Berita Bahasa Inggris - US)
     """
     try:
-        # Gunakan RSS Feed Resmi
-        RSS_URL = "https://www.cnnindonesia.com/teknologi/rss"
-        response = requests.get(RSS_URL, timeout=10)
+        # 1. Request ke URL API
+        response = requests.get(NEWS_API_URL, timeout=10)
         response.raise_for_status()
         
-        # Parse (Urai) XML dari RSS
-        root = ET.fromstring(response.content)
+        # 2. Parse sebagai JSON (Bukan XML)
+        data = response.json()
         
-        # Ambil semua tag <item> (berita) di dalam RSS
-        items = root.findall('./channel/item')
+        # 3. Ambil list artikel (default kosong jika tidak ada)
+        raw_articles = data.get('articles', [])[:5]
         
         formatted_articles = []
         
-        # Ambil 5 berita teratas
-        for item in items[:5]:
-            # Ambil gambar dari tag <enclosure> (standar RSS CNN)
-            image_url = ""
-            enclosure = item.find('enclosure')
-            if enclosure is not None:
-                image_url = enclosure.get('url')
-            
-            # Masukkan ke list dengan format yang sesuai Frontend JS
+        # 4. Loop dan format data agar sesuai dengan Frontend JS
+        for item in raw_articles:
+            # Filter: Kadang ada berita yang dihapus/error dengan judul "[Removed]"
+            if item.get('title') == '[Removed]':
+                continue
+                
             formatted_articles.append({
-                'title': item.find('title').text,
-                'description': item.find('description').text, # Deskripsi singkat
-                'url': item.find('link').text,                # Link ke berita asli
-                'publishedAt': item.find('pubDate').text,     # Tanggal
-                'image': image_url                            # Link gambar
+                'title': item.get('title'),
+                'description': item.get('description'),
+                'url': item.get('url'),
+                'publishedAt': item.get('publishedAt'),
+                # API ini menggunakan key 'urlToImage', kita ubah jadi 'image' agar JS paham
+                'image': item.get('urlToImage') 
             })
             
         return jsonify({
@@ -136,13 +131,12 @@ def get_news():
             'timestamp': datetime.now().isoformat()
         })
 
-    except Exception as e:
-        print(f"Error fetching news: {e}") # Print error di terminal untuk debugging
-        # Fallback: Jika gagal load, kirim data kosong agar web tidak error
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching news: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e),
-            'data': {'articles': []} 
+            'data': {'articles': []}
         }), 500
 
 @app.route('/api/health', methods=['GET'])

@@ -72,7 +72,10 @@ async function loadWeather() {
                         </div>
                     </div>
                     <p style="margin-top: 15px; color: #999; font-size: 0.9rem;">
-                        📍 ${lokasi.desa}, ${lokasi.kecamatan}, ${lokasi.kotkab}, ${lokasi.provinsi}
+                        ${lokasi.kecamatan}, ${lokasi.kotkab}, ${lokasi.provinsi}
+                    </p>
+                    <p style="margin-top: 5px; color: #999; font-size: 0.9rem;">
+                        Sumber data: <a href="https://bmkg.go.id/" target="_blank">BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)</a>
                     </p>
                 </div>
             `;

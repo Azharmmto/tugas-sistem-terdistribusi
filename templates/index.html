@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>📊 InfoHub Dashboard</h1>
-            <p class="subtitle">Sistem Informasi Terintegrasi: Cuaca, Kurs Mata Uang, dan Berita Teknologi</p>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Sistem Informasi Cuaca, Kurs Mata Uang, dan Berita Teknologi</p>
         </header>
 
         <div class="dashboard-grid">
@@ -28,7 +28,7 @@
             <!-- Currency Card -->
             <div class="card" id="currency-card">
                 <div class="card-header">
-                    <h2>💱 Nilai Tukar Mata Uang</h2>
+                    <h2>Nilai Tukar Mata Uang</h2>
                     <button onclick="loadCurrency()" class="refresh-btn">Refresh</button>
                 </div>
                 <div class="card-body" id="currency-content">
@@ -39,7 +39,7 @@
             <!-- News Card -->
             <div class="card" id="news-card">
                 <div class="card-header">
-                    <h2>📰 Berita Teknologi</h2>
+                    <h2>Berita Teknologi</h2>
                     <button onclick="loadNews()" class="refresh-btn">Refresh</button>
                 </div>
                 <div class="card-body" id="news-content">
@@ -51,17 +51,17 @@
         <!-- Daily Briefing Section -->
         <div class="briefing-card">
             <div class="card-header">
-                <h2>📧 Laporan Harian (Daily Briefing)</h2>
+                <h2>Laporan Harian</h2>
             </div>
             <div class="card-body">
                 <p style="margin-bottom: 15px; color: #666;">Dapatkan ringkasan cuaca, kurs rupiah, dan berita teknologi langsung ke Telegram Anda!</p>
                 <form id="briefing-form" onsubmit="sendBriefing(event)">
                     <div class="email-input-group">
-                        <input type="text" id="telegram-input" placeholder="Masukkan Telegram ID Anda" required pattern="[0-9]+" title="Telegram ID harus berupa angka">
+                        <input type="number" id="telegram-input" placeholder="Masukkan Telegram ID Anda" required pattern="[0-9]+" title="Telegram ID harus berupa angka">
                         <button type="submit" class="send-btn">Kirim</button>
                     </div>
                     <p style="margin-top: 10px; font-size: 12px; color: #999;">
-                        💡 Cara mendapatkan Telegram ID: 
+                        💡 Dapatkan Telegram ID: 
                         <a href="https://t.me/userinfobot" target="_blank" style="color: #3498db;">Chat @userinfobot</a>
                     </p>
                 </form>
@@ -76,8 +76,9 @@
                     <li>BMKG API (Data Cuaca Indonesia)</li>
                     <li>Exchange Rate API (Currency Exchange)</li>
                     <li>CNN Indonesia API (Berita Teknologi Indonesia)</li>
+                    <li>Telegram Bot API (Pengiriman Laporan Harian)</li>
                 </ul>
-                <p class="credit">InfoHub Dashboard - Tugas Mata Kuliah Sistem Terdistribusi &copy; 2025</p>
+                <p class="credit">Dashboard - Tugas Mata Kuliah Sistem Terdistribusi &copy; 2025</p>
             </div>
         </footer>
     </div>

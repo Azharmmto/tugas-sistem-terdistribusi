@@ -283,25 +283,14 @@ footer {
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.email-input-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.email-input-group input[type="email"] {
-    flex: 1;
+input[type="number"] {
+    width: 30%;
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.email-input-group input[type="email"]:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    margin-right: 10px;
+    transition: border-color 0.3s ease;
 }
 
 .send-btn {

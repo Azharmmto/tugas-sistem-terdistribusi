@@ -206,7 +206,7 @@ def send_briefing():
         # 5. Kirim via Telegram
         result = send_telegram_message(telegram_id, message)
         
-        if result:
+        if result['success']:
             return jsonify({
                 'status': 'success',
                 'message': f'Daily briefing berhasil dikirim ke Telegram ID: {telegram_id}'
@@ -214,7 +214,7 @@ def send_briefing():
         else:
             return jsonify({
                 'status': 'error',
-                'message': 'Gagal mengirim pesan Telegram. Pastikan Bot Token sudah dikonfigurasi dan Telegram ID benar.'
+                'message': result['error']
             }), 500
             
     except Exception as e:
@@ -279,10 +279,18 @@ def get_news_data(limit=3):
     except:
         return []
 
+def escape_markdown_v2(text):
+    """Helper untuk escape karakter MarkdownV2"""
+    # Karakter yang perlu di-escape di MarkdownV2
+    special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    for char in special_chars:
+        text = text.replace(char, f'\\{char}')
+    return text
+
 def create_telegram_message(weather_data, currency_data, news_data):
     """Membuat pesan Telegram untuk daily briefing"""
-    message = "📊 *Laporan Harian \\(Daily Briefing\\)*\n"
-    message += f"📅 Tanggal: {datetime.now().strftime('%d %B %Y')}\n"
+    message = "📊 *Laporan Harian*\n"
+    message += f"📅 Tanggal: {escape_markdown_v2(datetime.now().strftime('%d %B %Y'))}\n"
     message += "━━━━━━━━━━━━━━━━━━━━━━━\n\n"
     
     # Cuaca
@@ -294,16 +302,18 @@ def create_telegram_message(weather_data, currency_data, news_data):
         weather_emoji = get_weather_emoji_simple(weather.get('weather_desc', ''))
         
         message += f"🌤️ *Cuaca Hari Ini* {weather_emoji}\n"
-        message += f"├ Kondisi: *{weather.get('weather_desc', 'N/A')}*\n"
-        message += f"├ Suhu: *{weather.get('t', 'N/A')}°C*\n"
-        message += f"├ Lokasi: {lokasi.get('kotkab', 'N/A')}, {lokasi.get('provinsi', 'N/A')}\n"
-        message += f"├ Angin: {weather.get('ws', 'N/A')} km/h \\({weather.get('wd', 'N/A')}\\)\n"
-        message += f"└ Kelembaban: {weather.get('hu', 'N/A')}%\n\n"
+        message += f"├ Kondisi: *{escape_markdown_v2(str(weather.get('weather_desc', 'N/A')))}*\n"
+        message += f"├ Suhu: *{escape_markdown_v2(str(weather.get('t', 'N/A')))}°C*\n"
+        message += f"├ Lokasi: {escape_markdown_v2(lokasi.get('kotkab', 'N/A'))}, {escape_markdown_v2(lokasi.get('provinsi', 'N/A'))}\n"
+        message += f"├ Angin: {escape_markdown_v2(str(weather.get('ws', 'N/A')))} km/h \\({escape_markdown_v2(str(weather.get('wd', 'N/A')))}\\)\n"
+        message += f"└ Kelembaban: {escape_markdown_v2(str(weather.get('hu', 'N/A')))}%\n\n"
     
     # Currency
     if currency_data:
         message += "💱 *Kurs Rupiah Hari Ini*\n"
-        message += f"└ 1 USD = Rp {currency_data.get('idr', 0):,.2f}\n\n"
+        # Format number dan escape
+        idr_formatted = f"{currency_data.get('idr', 0):,.2f}".replace(',', '\\,').replace('.', '\\.')
+        message += f"└ 1 USD \\= Rp {idr_formatted}\n\n"
     
     # News
     if news_data:
@@ -311,14 +321,13 @@ def create_telegram_message(weather_data, currency_data, news_data):
         for i, article in enumerate(news_data[:3], 1):
             title = article.get('title', 'N/A')
             # Escape markdown special characters
-            title = title.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace(']', '\\]').replace('(', '\\(').replace(')', '\\)').replace('~', '\\~').replace('`', '\\`').replace('>', '\\>').replace('#', '\\#').replace('+', '\\+').replace('-', '\\-').replace('=', '\\=').replace('|', '\\|').replace('{', '\\{').replace('}', '\\}').replace('.', '\\.').replace('!', '\\!')
-            message += f"{i}\\. {title}\n"
+            title_escaped = escape_markdown_v2(title)
+            message += f"{i}\\. {title_escaped}\n"
             link = article.get('link', '#')
             message += f"   [Baca selengkapnya]({link})\n\n"
     
     message += "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    message += "_InfoHub Dashboard_\n"
-    message += "_Sistem Informasi Terintegrasi_"
+    message += "_Tugas Akhir Sistem Terdistribusi_\n"
     
     return message
 
@@ -353,7 +362,10 @@ def send_telegram_message(chat_id, message):
         if not bot_token:
             print("ERROR: Telegram Bot Token not configured!")
             print("Please set TELEGRAM_BOT_TOKEN in .env file")
-            return False
+            return {
+                'success': False,
+                'error': 'Bot Token tidak dikonfigurasi. Periksa file .env'
+            }
         
         # Telegram API URL
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -370,22 +382,55 @@ def send_telegram_message(chat_id, message):
         
         # Send request
         response = requests.post(url, json=payload, timeout=10)
-        response.raise_for_status()
+        
+        # Parse response
         result = response.json()
         
         if result.get('ok'):
             print(f"✓ Pesan berhasil dikirim ke Telegram chat_id: {chat_id}")
-            return True
+            return {
+                'success': True,
+                'error': None
+            }
         else:
-            print(f"ERROR: Telegram API error: {result.get('description', 'Unknown error')}")
-            return False
+            error_desc = result.get('description', 'Unknown error')
+            print(f"ERROR: Telegram API error: {error_desc}")
             
+            # Berikan pesan error yang lebih informatif
+            if 'chat not found' in error_desc.lower():
+                return {
+                    'success': False,
+                    'error': 'Telegram ID tidak ditemukan. Pastikan Anda sudah memulai chat dengan bot @notifst_bot terlebih dahulu.'
+                }
+            elif 'bot was blocked' in error_desc.lower():
+                return {
+                    'success': False,
+                    'error': 'Bot telah diblokir oleh user. Silakan unblock bot @notifst_bot di Telegram.'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': f'Telegram API Error: {error_desc}'
+                }
+            
+    except requests.exceptions.Timeout:
+        print(f"ERROR: Request timeout")
+        return {
+            'success': False,
+            'error': 'Timeout menghubungi Telegram API. Coba lagi.'
+        }
     except requests.exceptions.RequestException as e:
         print(f"ERROR: Gagal mengirim pesan Telegram: {e}")
-        return False
+        return {
+            'success': False,
+            'error': f'Gagal menghubungi Telegram API: {str(e)}'
+        }
     except Exception as e:
         print(f"ERROR: {e}")
-        return False
+        return {
+            'success': False,
+            'error': f'Error tidak terduga: {str(e)}'
+        }
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

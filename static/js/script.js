@@ -139,10 +139,29 @@ async function loadCurrency() {
     }
 }
 
-// Fungsi untuk load berita (3 berita random)
+// Extract image URL from various API response formats
+function extractImageUrl(article) {
+    // Priority order: thumbnail > image > poster > urlToImage > enclosure
+    if (article.thumbnail) return article.thumbnail;
+    if (article.image) return article.image;
+    if (article.poster) return article.poster;
+    if (article.urlToImage) return article.urlToImage;
+    
+    // Check enclosure object (common in RSS feeds)
+    if (article.enclosure && article.enclosure.url) return article.enclosure.url;
+    
+    // Check media array (some APIs use this)
+    if (article.media && Array.isArray(article.media) && article.media.length > 0) {
+        return article.media[0].url || article.media[0].link;
+    }
+    
+    return null;
+}
+
+// Fungsi untuk load berita dengan rich media support
 async function loadNews() {
     const newsContent = document.getElementById('news-content');
-    newsContent.innerHTML = '<div class="loading">Memuat berita...</div>';
+    newsContent.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Memuat berita...</p></div>';
     
     try {
         const response = await fetch('/api/news');
@@ -152,7 +171,7 @@ async function loadNews() {
             const articles = result.data.articles;
             
             if (articles.length === 0) {
-                newsContent.innerHTML = '<p style="text-align: center; color: #999;">Tidak ada berita tersedia</p>';
+                newsContent.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: var(--spacing-xl);">Tidak ada berita tersedia</p>';
                 return;
             }
             
@@ -160,8 +179,12 @@ async function loadNews() {
             
             articles.forEach((article, index) => {
                 if (article.title && article.title !== '[Removed]') {
-                    const imageUrl = article.image || '';
-                    const imageHtml = imageUrl 
+                    // Extract image from multiple possible fields
+                    const imageUrl = extractImageUrl(article);
+                    const hasImage = imageUrl && imageUrl.trim() !== '';
+                    
+                    // Create image element with error handling
+                    const imageHtml = hasImage 
                         ? `<img src="${imageUrl}" alt="${article.title}" class="news-image" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'news-image-placeholder\\'>📰</div>'">` 
                         : '<div class="news-image-placeholder">📰</div>';
                     
@@ -172,8 +195,13 @@ async function loadNews() {
                             </div>
                             <div class="news-content">
                                 <span class="news-title">${article.title}</span>
-                                <p class="news-description">${article.description || 'Tidak ada deskripsi'}</p>
-                                <a href="${article.url}" target="_blank" class="news-link">Baca selengkapnya →</a>
+                                ${article.description ? `<p class="news-description">${article.description}</p>` : ''}
+                                <a href="${article.url}" target="_blank" class="news-link">
+                                    Baca selengkapnya
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                                    </svg>
+                                </a>
                             </div>
                         </li>
                     `;

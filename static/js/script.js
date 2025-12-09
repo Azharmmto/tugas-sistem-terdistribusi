@@ -160,8 +160,16 @@ async function loadNews() {
             
             articles.forEach((article, index) => {
                 if (article.title && article.title !== '[Removed]') {
+                    const imageUrl = article.image || '';
+                    const imageHtml = imageUrl 
+                        ? `<img src="${imageUrl}" alt="${article.title}" class="news-image" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'news-image-placeholder\\'>📰</div>'">` 
+                        : '<div class="news-image-placeholder">📰</div>';
+                    
                     html += `
                         <li class="news-item">
+                            <div class="news-image-wrapper">
+                                ${imageHtml}
+                            </div>
                             <div class="news-content">
                                 <span class="news-title">${article.title}</span>
                                 <p class="news-description">${article.description || 'Tidak ada deskripsi'}</p>

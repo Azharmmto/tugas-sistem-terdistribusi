@@ -14,7 +14,6 @@ app = Flask(__name__)
 
 # API Endpoints (menggunakan API publik gratis)
 WEATHER_API_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
-QUOTE_API_URL = "https://api.quotable.io/random"
 CURRENCY_API_URL = "https://api.exchangerate-api.com/v4/latest/USD"
 NEWS_API_URL = "https://berita-indo-api-next.vercel.app/api/cnn-news/teknologi"
 

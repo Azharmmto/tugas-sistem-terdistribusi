@@ -174,7 +174,7 @@ Melalui project ini, mahasiswa belajar tentang:
 ```
 
 ## 👨‍💻 Pengembang
-**Azharmmto**
+**Azhar Mamonto** (AI)
 
 ## 📄 Lisensi
 Project ini dibuat untuk keperluan akademik - Tugas Mata Kuliah Sistem Terdistribusi.

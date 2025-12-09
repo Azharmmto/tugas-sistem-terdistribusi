@@ -262,3 +262,54 @@ async function sendBriefing(event) {
         statusDiv.innerHTML = '';
     }, 5000);
 }
+
+// Footer Subscribe Handler
+async function handleFooterSubscribe(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const input = form.querySelector('.subscribe-input');
+    const button = form.querySelector('.subscribe-btn');
+    const email = input.value.trim();
+    
+    if (!email) {
+        return;
+    }
+    
+    // Save original button content
+    const originalContent = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<svg class="loading-spinner" width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.3"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="60" stroke-dashoffset="15" style="animation: spin 1s linear infinite;"/></svg>';
+    button.disabled = true;
+    
+    try {
+        // Simulate API call (replace with your actual endpoint)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Success animation
+        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        
+        // Clear input
+        input.value = '';
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.style.background = '';
+            button.disabled = false;
+        }, 2000);
+        
+    } catch (error) {
+        // Error state
+        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.style.background = '';
+            button.disabled = false;
+        }, 2000);
+    }
+}

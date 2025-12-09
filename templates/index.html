@@ -171,26 +171,83 @@
                 </div>
             </div>
 
-            <!-- Footer -->
-            <footer class="footer">
-                <div class="footer-content">
-                    <div class="footer-section">
-                        <h4>API YANG DIGUNAKAN</h4>
-                        <div class="api-badges">
-                            <span class="api-badge"><a href="https://data.bmkg.go.id/prakiraan-cuaca/">BMKG</a></span>
-                            <span class="api-badge">💰 Nilai Tukar</span>
-                            <span class="api-badge">📱 CNN Indonesia</span>
-                            <span class="api-badge">✈️ Telegram Bot</span>
+            <!-- Footer - Clarity Theme Design -->
+           
+        </div>
+         <footer class="footer-clarity">
+                <div class="footer-container">
+                    <!-- Main Footer Grid (4 Columns) -->
+                    <div class="footer-grid">
+                        <!-- Column 1: Brand & Subscribe -->
+                        <div class="footer-col footer-brand">
+                            <div class="footer-logo">
+                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="32" height="32" rx="8" fill="url(#footerGradient)"/>
+                                    <path d="M16 8L24 12V20L16 24L8 20V12L16 8Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                        <linearGradient id="footerGradient" x1="0" y1="0" x2="32" y2="32">
+                                            <stop offset="0%" stop-color="#8b5cf6"/>
+                                            <stop offset="100%" stop-color="#6366f1"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <span class="footer-brand-name">InfoHub</span>
+                            </div>
+                            <p class="footer-description">
+                                Platform terpadu untuk informasi cuaca, nilai tukar, dan berita teknologi terkini. Dapatkan pembaruan langsung ke Telegram Anda.
+                            </p>
+                            <!-- Pill-Shaped Subscribe Form -->
+                        </div>
+
+                        <!-- Column 2: Menu Links -->
+                        <div class="footer-col">
+                            <h4 class="footer-heading">Menu</h4>
+                            <ul class="footer-links">
+                                <li><a href="#weather-section">Cuaca</a></li>
+                                <li><a href="#currency-section">Nilai Tukar</a></li>
+                                <li><a href="#news-section">Berita</a></li>
+                                <li><a href="#briefing-section">Telegram Briefing</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Column 3: Info Links -->
+                        <div class="footer-col">
+                            <h4 class="footer-heading">Sumber API</h4>
+                            <ul class="footer-links">
+                                <li><a href="https://data.bmkg.go.id/prakiraan-cuaca/" target="_blank" rel="noopener">Data BMKG</a></li>
+                                <li><a href="https://www.cnnindonesia.com/teknologi" target="_blank" rel="noopener">CNN Teknologi</a></li>
+                                <li><a href="https://core.telegram.org/bots/api" target="_blank" rel="noopener">Telegram Bot API</a></li>
+                                <li><a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener">Exchange Rate API</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Column 4: Social Media & Resources -->
+                        <div class="footer-col">
+                            <h4 class="footer-heading">Resources</h4>
+                            <ul class="footer-links">
+                                <li><a href="https://t.me/userinfobot" target="_blank" rel="noopener">Dapatkan Telegram ID</a></li>
+                                <li><a href="https://github.com" target="_blank" rel="noopener">GitHub</a></li>
+                            </ul>
                         </div>
                     </div>
-                    <div class="footer-divider"></div>
-                    <div class="footer-bottom">
-                        <p>© 2025 InfoHub Dashboard • Proyek Sistem Terdistribusi</p>
+
+                    <!-- Bottom Bar: Copyright & API Credits -->
+                    <div class="footer-bottom-bar">
+                        <div class="footer-bottom-content">
+                            <p class="footer-copyright">
+                                © 2025 Tugas Sistem Terdistribusi
+                            </p>
+                            <div class="footer-api-credits">
+                                <span class="api-credit-item">🌤️ BMKG</span>
+                                <span class="api-credit-item">💰 ExchangeRate</span>
+                                <span class="api-credit-item">📱 CNN Indonesia</span>
+                                <span class="api-credit-item">✈️ Telegram</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </footer>
         </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
